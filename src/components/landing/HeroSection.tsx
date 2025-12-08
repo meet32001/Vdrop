@@ -18,7 +18,7 @@ const HeroSection = () => {
           <div className="animate-slide-up">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-6">
               <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-              <span className="text-sm font-medium text-accent">Now serving Austin, TX</span>
+              <span className="text-sm font-medium text-accent">Now serving London, ON</span>
             </div>
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight mb-6">

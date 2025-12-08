@@ -48,8 +48,8 @@ const BookPickup = () => {
     // Common fields
     address: "",
     apartment: "",
-    city: "Austin",
-    state: "TX",
+    city: "London",
+    state: "ON",
     zip: "",
     pickupDate: "",
     pickupTime: "",

@@ -34,7 +34,7 @@ const ServiceArea = () => {
 
               {/* Content */}
               <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-                Currently Serving Austin, TX
+                Currently Serving London, ON
               </h2>
               <p className="text-lg text-primary-foreground/70 mb-8 max-w-xl mx-auto">
                 We're expanding! Sign up to be notified when Vdrop launches in your city.
@@ -59,7 +59,7 @@ const ServiceArea = () => {
               <div className="mt-10 pt-8 border-t border-primary-foreground/10">
                 <p className="text-sm text-primary-foreground/50 mb-3">Coming Soon</p>
                 <div className="flex flex-wrap justify-center gap-3">
-                  {["Dallas", "Houston", "San Antonio", "Phoenix", "Denver"].map((city) => (
+                  {["Toronto", "Kitchener", "Waterloo", "Hamilton", "Woodstock"].map((city) => (
                     <span
                       key={city}
                       className="px-4 py-2 rounded-full bg-primary-foreground/5 text-primary-foreground/60 text-sm font-medium"

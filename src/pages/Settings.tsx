@@ -227,7 +227,7 @@ const Settings = () => {
                   value={address.city}
                   onChange={(e) => setAddress({ ...address, city: e.target.value })}
                   className="h-11"
-                  placeholder="Austin"
+                  placeholder="London"
                 />
               </div>
               <div className="space-y-2">
@@ -237,7 +237,7 @@ const Settings = () => {
                   value={address.state}
                   onChange={(e) => setAddress({ ...address, state: e.target.value })}
                   className="h-11"
-                  placeholder="TX"
+                  placeholder="ON"
                 />
               </div>
               <div className="space-y-2">

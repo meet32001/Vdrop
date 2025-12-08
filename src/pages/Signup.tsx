@@ -105,7 +105,7 @@ const Signup = () => {
               </div>
               <div>
                 <p className="text-primary-foreground font-medium text-sm">Sarah M.</p>
-                <p className="text-primary-foreground/50 text-xs">Austin, TX</p>
+                <p className="text-primary-foreground/50 text-xs">London, ON</p>
               </div>
             </div>
           </div>
