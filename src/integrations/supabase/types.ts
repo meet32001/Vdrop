@@ -141,6 +141,8 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          notification_marketing_email: boolean | null
+          notification_order_email: boolean | null
           phone: string | null
           updated_at: string
           user_id: string
@@ -149,6 +151,8 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          notification_marketing_email?: boolean | null
+          notification_order_email?: boolean | null
           phone?: string | null
           updated_at?: string
           user_id: string
@@ -157,6 +161,8 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          notification_marketing_email?: boolean | null
+          notification_order_email?: boolean | null
           phone?: string | null
           updated_at?: string
           user_id?: string

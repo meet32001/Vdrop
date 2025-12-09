@@ -33,7 +33,7 @@ const HeroSection = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <Link to="/signup">
+              <Link to="/login">
                 <Button variant="hero" size="xl" className="w-full sm:w-auto group">
                   Book a Pickup
                   <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />

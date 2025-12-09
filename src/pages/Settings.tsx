@@ -3,6 +3,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -31,12 +32,14 @@ const Settings = () => {
     full_name: "",
     phone: "",
   });
+  const [initialProfile, setInitialProfile] = useState<null | typeof profile>(null);
   const [address, setAddress] = useState({
     street_address: "",
     city_id: "",
     state: "", // Kept for display purposes
     zip_code: "",
   });
+  const [initialAddress, setInitialAddress] = useState<null | typeof address>(null);
   const [addressId, setAddressId] = useState<string | null>(null);
   const [availableCities, setAvailableCities] = useState<{ id: string; name: string; state: string }[]>([]);
 
@@ -63,6 +66,13 @@ const Settings = () => {
     { text: "One special character", met: /[!@#$%^&*(),.?":{}|<>]/.test(passwordForm.password) },
   ];
 
+  // Notification State
+  const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
+  const [notifyPrefs, setNotifyPrefs] = useState({
+    marketing: true,
+    orders: true,
+  });
+
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
@@ -80,14 +90,21 @@ const Settings = () => {
       // Fetch profile
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("full_name, phone")
+        .select("full_name, phone, notification_marketing_email, notification_order_email")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (profileData) {
-        setProfile({
+        const profileInfo = {
           full_name: profileData.full_name || "",
           phone: profileData.phone || "",
+        };
+        setProfile(profileInfo);
+        setInitialProfile(profileInfo);
+        
+        setNotifyPrefs({
+          marketing: profileData.notification_marketing_email ?? true,
+          orders: profileData.notification_order_email ?? true,
         });
       }
 
@@ -102,12 +119,14 @@ const Settings = () => {
       if (addressData) {
         setAddressId(addressData.id);
         const city = citiesData?.find(c => c.id === addressData.city_id);
-        setAddress({
+        const addressInfo = {
           street_address: addressData.street_address,
           city_id: addressData.city_id,
           state: city ? city.state : "",
           zip_code: addressData.zip_code,
-        });
+        };
+        setAddress(addressInfo);
+        setInitialAddress(addressInfo);
       }
 
       setLoading(false);
@@ -201,6 +220,41 @@ const Settings = () => {
     }
   };
 
+  const handleNotifyToggle = async (key: 'marketing' | 'orders', value: boolean) => {
+    if (!user) return;
+    
+    // Optimistic update
+    setNotifyPrefs(prev => ({ ...prev, [key]: value }));
+
+    try {
+      const updateData = key === 'marketing' 
+        ? { notification_marketing_email: value }
+        : { notification_order_email: value };
+
+      const { error } = await supabase
+        .from("profiles")
+        .upsert({
+            user_id: user.id,
+            ...updateData,
+            updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+
+    } catch (error: any) {
+      console.error("Error updating notification prefs:", error);
+      // Revert on error
+      setNotifyPrefs(prev => ({ ...prev, [key]: !value }));
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update preference.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSave = async () => {
     if (!user) return;
     
@@ -211,6 +265,18 @@ const Settings = () => {
         variant: "destructive",
       });
       return;
+    }
+
+    // Check if changes were made
+    const isProfileChanged = JSON.stringify(profile) !== JSON.stringify(initialProfile);
+    const isAddressChanged = JSON.stringify(address) !== JSON.stringify(initialAddress);
+
+    if (!isProfileChanged && !isAddressChanged) {
+        toast({
+            title: "Settings saved",
+            description: "No changes were made to your profile.",
+        });
+        return;
     }
 
     setSaving(true);
@@ -225,6 +291,8 @@ const Settings = () => {
           full_name: profile.full_name,
           phone: profile.phone,
           updated_at: new Date().toISOString(),
+        }, {
+            onConflict: 'user_id'
         });
 
       if (profileError) throw profileError;
@@ -260,10 +328,13 @@ const Settings = () => {
         title: "Settings saved",
         description: "Your profile has been updated successfully.",
       });
+      setInitialProfile(profile);
+      setInitialAddress(address);
     } catch (error: any) {
+      console.error("Error saving settings:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to save settings.",
+        description: "Failed to save settings. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -437,13 +508,49 @@ const Settings = () => {
 
         {/* Other Settings */}
         <div className="grid sm:grid-cols-2 gap-4 mb-8">
-          <button className="bg-card rounded-xl border border-border p-6 text-left hover:shadow-lg transition-shadow">
-            <div className="w-10 h-10 rounded-xl bg-navy/10 flex items-center justify-center mb-4">
-              <Bell className="w-5 h-5 text-navy" />
-            </div>
-            <h3 className="font-semibold text-foreground mb-1">Notifications</h3>
-            <p className="text-sm text-muted-foreground">Manage email and SMS alerts.</p>
-          </button>
+          <Dialog open={isNotifyDialogOpen} onOpenChange={setIsNotifyDialogOpen}>
+              <DialogTrigger asChild>
+                <button className="bg-card rounded-xl border border-border p-6 text-left hover:shadow-lg transition-shadow">
+                  <div className="w-10 h-10 rounded-xl bg-navy/10 flex items-center justify-center mb-4">
+                    <Bell className="w-5 h-5 text-navy" />
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-1">Notifications</h3>
+                  <p className="text-sm text-muted-foreground">Manage email preferences.</p>
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Email Notifications</DialogTitle>
+                  <DialogDescription>
+                    Choose which emails you'd like to receive.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                  <div className="flex items-center justify-between space-x-2">
+                    <Label htmlFor="order-emails" className="flex flex-col space-y-1 opacity-70">
+                      <span>Order Updates</span>
+                      <span className="font-normal text-xs text-muted-foreground">Receive emails about your pickup status (Required).</span>
+                    </Label>
+                    <Switch
+                      id="order-emails"
+                      checked={true}
+                      disabled
+                    />
+                  </div>
+                  <div className="flex items-center justify-between space-x-2">
+                    <Label htmlFor="marketing-emails" className="flex flex-col space-y-1">
+                      <span>Marketing & Promos</span>
+                      <span className="font-normal text-xs text-muted-foreground">Receive news, updates, and special offers.</span>
+                    </Label>
+                    <Switch
+                      id="marketing-emails"
+                      checked={notifyPrefs.marketing}
+                      onCheckedChange={(checked) => handleNotifyToggle('marketing', checked)}
+                    />
+                  </div>
+                </div>
+              </DialogContent>
+          </Dialog>
 
             <button className="bg-card rounded-xl border border-border p-6 text-left hover:shadow-lg transition-shadow">
               <div className="w-10 h-10 rounded-xl bg-navy/10 flex items-center justify-center mb-4">

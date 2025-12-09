@@ -51,13 +51,7 @@ const Navbar = () => {
                   onClick={() => scrollToSection("services")}
                   className="text-primary-foreground/80 hover:text-accent font-medium transition-colors"
                 >
-                  Services
-                </button>
-                <button 
-                  onClick={() => scrollToSection("pricing")}
-                  className="text-primary-foreground/80 hover:text-accent font-medium transition-colors"
-                >
-                  Pricing
+                  Services & Pricing
                 </button>
                 <button 
                   onClick={() => scrollToSection("how-it-works")}
@@ -116,16 +110,7 @@ const Navbar = () => {
                     "text-primary-foreground/80 hover:text-accent hover:bg-accent/10"
                   )}
                 >
-                  Services
-                </button>
-                <button 
-                  onClick={() => scrollToSection("pricing")}
-                  className={cn(
-                    "py-3 px-4 rounded-lg text-left font-medium transition-colors",
-                    "text-primary-foreground/80 hover:text-accent hover:bg-accent/10"
-                  )}
-                >
-                  Pricing
+                  Services & Pricing
                 </button>
                 <button 
                   onClick={() => scrollToSection("how-it-works")}
