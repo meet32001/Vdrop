@@ -5,16 +5,27 @@ import { toast } from "@/hooks/use-toast";
 
 const ServiceArea = () => {
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
 
   const handleNotify = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      toast({
-        title: "You're on the list!",
-        description: "We'll notify you when Vdrop comes to your area.",
-      });
-      setEmail("");
+    setError("");
+    
+    if (!email) {
+      setError("Please enter your email address.");
+      return;
     }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    toast({
+      title: "You're on the list!",
+      description: "We'll notify you when Vdrop comes to your area.",
+    });
+    setEmail("");
   };
 
   return (
@@ -41,18 +52,28 @@ const ServiceArea = () => {
               </p>
 
               {/* Email Form */}
-              <form onSubmit={handleNotify} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="flex-1 px-5 py-3.5 rounded-xl bg-primary-foreground/10 border border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                />
-                <Button type="submit" variant="accent" size="lg" className="whitespace-nowrap">
-                  <Bell className="w-4 h-4" />
-                  Notify Me
-                </Button>
+              <form onSubmit={handleNotify} className="max-w-md mx-auto">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (error) setError("");
+                    }}
+                    placeholder="Enter your email"
+                    className={`flex-1 px-5 py-3.5 rounded-xl bg-primary-foreground/10 border text-primary-foreground placeholder:text-primary-foreground/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all ${
+                      error ? "border-destructive focus:ring-destructive" : "border-primary-foreground/20"
+                    }`}
+                  />
+                  <Button type="submit" variant="accent" size="lg" className="whitespace-nowrap">
+                    <Bell className="w-4 h-4" />
+                    Notify Me
+                  </Button>
+                </div>
+                {error && (
+                  <p className="text-sm text-destructive mt-2 text-left px-1">{error}</p>
+                )}
               </form>
 
               {/* Cities Coming Soon */}

@@ -14,36 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      cities: {
+        Row: {
+          id: string
+          name: string
+          state: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          state: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          state?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       addresses: {
         Row: {
-          city: string
+          city_id: string
           created_at: string
           id: string
           is_default: boolean | null
           label: string | null
-          state: string
           street_address: string
           user_id: string
           zip_code: string
         }
         Insert: {
-          city: string
+          city_id: string
           created_at?: string
           id?: string
           is_default?: boolean | null
           label?: string | null
-          state: string
           street_address: string
           user_id: string
           zip_code: string
         }
         Update: {
-          city?: string
+          city_id?: string
           created_at?: string
           id?: string
           is_default?: boolean | null
           label?: string | null
-          state?: string
           street_address?: string
           user_id?: string
           zip_code?: string
@@ -150,7 +168,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_email_exists: {
+        Args: {
+          email_to_check: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       item_size: "small" | "medium" | "large"

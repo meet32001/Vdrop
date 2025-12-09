@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Package, Mail, Lock, User, ArrowRight, Eye, EyeOff, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -18,6 +19,12 @@ const Signup = () => {
     password: "",
   });
 
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+  }>({});
+
   useEffect(() => {
     if (!loading && user) {
       navigate("/dashboard");
@@ -26,30 +33,46 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    setIsLoading(true);
     
     // Validate password requirements
-    if (formData.password.length < 8) {
-      toast({
-        title: "Weak password",
-        description: "Password must be at least 8 characters long.",
-        variant: "destructive",
-      });
+    const hasUpperCase = /[A-Z]/.test(formData.password);
+    const hasLowerCase = /[a-z]/.test(formData.password);
+    const hasNumber = /[0-9]/.test(formData.password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(formData.password);
+    const isLengthValid = formData.password.length >= 8;
+
+    if (!isLengthValid || !hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+      setErrors(prev => ({ ...prev, password: "Password must meet all requirements." }));
+      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
+    if (!formData.name.trim()) {
+      setErrors(prev => ({ ...prev, name: "Name is required" }));
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if email exists first
+    const { data: emailExists } = await supabase.rpc('check_email_exists', { 
+      email_to_check: formData.email 
+    });
+
+    if (emailExists) {
+      setIsLoading(false);
+      setErrors(prev => ({ ...prev, email: "An account with this email already exists." }));
+      return;
+    }
     
     const { error } = await signUp(formData.email, formData.password, formData.name);
     
     if (error) {
       setIsLoading(false);
-      let message = error.message;
-      if (error.message.includes("already registered")) {
-        message = "An account with this email already exists. Please sign in instead.";
-      }
       toast({
         title: "Signup failed",
-        description: message,
+        description: error.message,
         variant: "destructive",
       });
       return;
@@ -59,13 +82,15 @@ const Signup = () => {
       title: "Account created!",
       description: "Welcome to Vdrop. Let's book your first pickup!",
     });
-    navigate("/dashboard");
+    navigate("/verify-email", { state: { email: formData.email } });
   };
 
   const passwordRequirements = [
     { text: "At least 8 characters", met: formData.password.length >= 8 },
     { text: "One uppercase letter", met: /[A-Z]/.test(formData.password) },
+    { text: "One lowercase letter", met: /[a-z]/.test(formData.password) },
     { text: "One number", met: /[0-9]/.test(formData.password) },
+    { text: "One special character", met: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password) },
   ];
 
   if (loading) {
@@ -145,10 +170,12 @@ const Signup = () => {
                   placeholder="John Doe"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="pl-11 h-12"
-                  required
+                  className={`pl-11 h-12 ${errors.name ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
               </div>
+              {errors.name && (
+                <p className="text-sm text-destructive">{errors.name}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -160,11 +187,16 @@ const Signup = () => {
                   type="email"
                   placeholder="you@example.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="pl-11 h-12"
-                  required
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    if (errors.email) setErrors({ ...errors, email: undefined });
+                  }}
+                  className={`pl-11 h-12 ${errors.email ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
               </div>
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -176,9 +208,11 @@ const Signup = () => {
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a strong password"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="pl-11 pr-11 h-12"
-                  required
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    if (errors.password) setErrors({ ...errors, password: undefined });
+                  }}
+                  className={`pl-11 pr-11 h-12 ${errors.password ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
                 <button
                   type="button"
@@ -188,6 +222,9 @@ const Signup = () => {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password}</p>
+              )}
               
               {/* Password Requirements */}
               <div className="pt-2 space-y-1">

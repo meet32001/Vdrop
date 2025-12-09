@@ -149,19 +149,62 @@ const BookPickup = () => {
     }
   };
 
-  const canProceed = () => {
-    switch (step) {
-      case 1:
-        return true;
-      case 2:
-        if (serviceType === "standard") {
-          return formData.numberOfBoxes !== "";
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateStep = (currentStep: number) => {
+    const newErrors: Record<string, string> = {};
+    let isValid = true;
+
+    if (currentStep === 2) {
+      if (serviceType === "standard") {
+        if (!formData.numberOfBoxes) {
+          newErrors.numberOfBoxes = "Please select the number of boxes";
+          isValid = false;
         }
-        return formData.itemSize !== "" && formData.labelFile !== null;
-      case 3:
-        return formData.address && formData.zip && formData.pickupDate && formData.pickupTime;
-      default:
-        return true;
+      } else {
+        if (!formData.itemSize) {
+          newErrors.itemSize = "Please select the item size";
+          isValid = false;
+        }
+        if (!formData.labelFile) {
+          newErrors.labelFile = "Please upload a return label";
+          isValid = false;
+        }
+      }
+    }
+
+    if (currentStep === 3) {
+      if (!formData.address?.trim()) {
+        newErrors.address = "Street address is required";
+        isValid = false;
+      }
+      if (!formData.zip?.trim()) {
+        newErrors.zip = "ZIP code is required";
+        isValid = false;
+      }
+      if (!formData.pickupDate) {
+        newErrors.pickupDate = "Pickup date is required";
+        isValid = false;
+      }
+      if (!formData.pickupTime) {
+        newErrors.pickupTime = "Pickup time is required";
+        isValid = false;
+      }
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleNext = () => {
+    if (validateStep(step)) {
+      setStep(step + 1);
+    } else {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -291,9 +334,12 @@ const BookPickup = () => {
                   <Label htmlFor="boxes">Number of Boxes</Label>
                   <Select
                     value={formData.numberOfBoxes}
-                    onValueChange={(value) => setFormData({ ...formData, numberOfBoxes: value })}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, numberOfBoxes: value });
+                      if (errors.numberOfBoxes) setErrors({ ...errors, numberOfBoxes: "" });
+                    }}
                   >
-                    <SelectTrigger className="h-12">
+                    <SelectTrigger className={`h-12 ${errors.numberOfBoxes ? "border-destructive focus:ring-destructive" : ""}`}>
                       <SelectValue placeholder="Select number of boxes" />
                     </SelectTrigger>
                     <SelectContent>
@@ -304,6 +350,7 @@ const BookPickup = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.numberOfBoxes && <p className="text-sm text-destructive">{errors.numberOfBoxes}</p>}
                 </div>
               ) : (
                 <>
@@ -314,9 +361,12 @@ const BookPickup = () => {
                     </p>
                     <Select
                       value={formData.itemSize}
-                      onValueChange={(value) => setFormData({ ...formData, itemSize: value })}
+                      onValueChange={(value) => {
+                        setFormData({ ...formData, itemSize: value });
+                        if (errors.itemSize) setErrors({ ...errors, itemSize: "" });
+                      }}
                     >
-                      <SelectTrigger className="h-12">
+                      <SelectTrigger className={`h-12 ${errors.itemSize ? "border-destructive focus:ring-destructive" : ""}`}>
                         <SelectValue placeholder="Select item size" />
                       </SelectTrigger>
                       <SelectContent>
@@ -325,6 +375,7 @@ const BookPickup = () => {
                         <SelectItem value="large">Large (needs a bigger box)</SelectItem>
                       </SelectContent>
                     </Select>
+                    {errors.itemSize && <p className="text-sm text-destructive">{errors.itemSize}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -354,7 +405,9 @@ const BookPickup = () => {
                         </button>
                       </div>
                     ) : (
-                      <label className="flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed border-border hover:border-accent/50 cursor-pointer transition-colors">
+                      <label className={`flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed hover:border-accent/50 cursor-pointer transition-colors ${
+                        errors.labelFile ? "border-destructive bg-destructive/5" : "border-border"
+                      }`}>
                         <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
                           <Upload className="w-7 h-7 text-accent" />
                         </div>
@@ -365,11 +418,15 @@ const BookPickup = () => {
                         <input
                           type="file"
                           accept=".pdf"
-                          onChange={handleFileChange}
+                          onChange={(e) => {
+                            handleFileChange(e);
+                            if (errors.labelFile) setErrors({ ...errors, labelFile: "" });
+                          }}
                           className="hidden"
                         />
                       </label>
                     )}
+                    {errors.labelFile && <p className="text-sm text-destructive">{errors.labelFile}</p>}
                   </div>
                 </>
               )}
@@ -393,10 +450,14 @@ const BookPickup = () => {
                       id="address"
                       placeholder="123 Main Street"
                       value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      className="pl-11 h-12"
+                      onChange={(e) => {
+                        setFormData({ ...formData, address: e.target.value });
+                        if (errors.address) setErrors({ ...errors, address: "" });
+                      }}
+                      className={`pl-11 h-12 ${errors.address ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     />
                   </div>
+                  {errors.address && <p className="text-sm text-destructive">{errors.address}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -416,9 +477,13 @@ const BookPickup = () => {
                       id="zip"
                       placeholder="78701"
                       value={formData.zip}
-                      onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
-                      className="h-12"
+                      onChange={(e) => {
+                        setFormData({ ...formData, zip: e.target.value });
+                        if (errors.zip) setErrors({ ...errors, zip: "" });
+                      }}
+                      className={`h-12 ${errors.zip ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     />
+                    {errors.zip && <p className="text-sm text-destructive">{errors.zip}</p>}
                   </div>
                 </div>
 
@@ -431,18 +496,25 @@ const BookPickup = () => {
                         id="date"
                         type="date"
                         value={formData.pickupDate}
-                        onChange={(e) => setFormData({ ...formData, pickupDate: e.target.value })}
-                        className="pl-11 h-12"
+                        onChange={(e) => {
+                          setFormData({ ...formData, pickupDate: e.target.value });
+                          if (errors.pickupDate) setErrors({ ...errors, pickupDate: "" });
+                        }}
+                        className={`pl-11 h-12 ${errors.pickupDate ? "border-destructive focus-visible:ring-destructive" : ""}`}
                       />
                     </div>
+                    {errors.pickupDate && <p className="text-sm text-destructive">{errors.pickupDate}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="time">Pickup Window</Label>
                     <Select
                       value={formData.pickupTime}
-                      onValueChange={(value) => setFormData({ ...formData, pickupTime: value })}
+                      onValueChange={(value) => {
+                        setFormData({ ...formData, pickupTime: value });
+                        if (errors.pickupTime) setErrors({ ...errors, pickupTime: "" });
+                      }}
                     >
-                      <SelectTrigger className="h-12">
+                      <SelectTrigger className={`h-12 ${errors.pickupTime ? "border-destructive focus:ring-destructive" : ""}`}>
                         <Clock className="w-5 h-5 text-muted-foreground mr-2" />
                         <SelectValue placeholder="Select time" />
                       </SelectTrigger>
@@ -452,6 +524,7 @@ const BookPickup = () => {
                         <SelectItem value="3pm-6pm">3:00 PM - 6:00 PM</SelectItem>
                       </SelectContent>
                     </Select>
+                    {errors.pickupTime && <p className="text-sm text-destructive">{errors.pickupTime}</p>}
                   </div>
                 </div>
 
@@ -564,8 +637,7 @@ const BookPickup = () => {
             {step < 4 ? (
               <Button
                 variant="navy"
-                onClick={() => setStep(step + 1)}
-                disabled={!canProceed()}
+                onClick={handleNext}
               >
                 Continue
                 <ArrowRight className="w-4 h-4 ml-2" />

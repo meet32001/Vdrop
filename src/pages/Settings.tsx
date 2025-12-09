@@ -3,6 +3,13 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { User, MapPin, Bell, CreditCard } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,15 +25,28 @@ const Settings = () => {
   });
   const [address, setAddress] = useState({
     street_address: "",
-    city: "",
-    state: "",
+    city_id: "",
+    state: "", // Kept for display purposes
     zip_code: "",
   });
   const [addressId, setAddressId] = useState<string | null>(null);
+  const [availableCities, setAvailableCities] = useState<{ id: string; name: string; state: string }[]>([]);
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
+
+      // Fetch cities
+      const { data: citiesData } = await supabase
+        .from("cities")
+        .select("id, name, state")
+        .order("name");
+
+      if (citiesData) {
+        setAvailableCities(citiesData);
+      }
 
       // Fetch profile
       const { data: profileData } = await supabase
@@ -52,10 +72,11 @@ const Settings = () => {
 
       if (addressData) {
         setAddressId(addressData.id);
+        const city = citiesData?.find(c => c.id === addressData.city_id);
         setAddress({
           street_address: addressData.street_address,
-          city: addressData.city,
-          state: addressData.state,
+          city_id: addressData.city_id,
+          state: city ? city.state : "",
           zip_code: addressData.zip_code,
         });
       }
@@ -66,8 +87,61 @@ const Settings = () => {
     fetchData();
   }, [user]);
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    let isValid = true;
+
+    if (!profile.full_name?.trim()) {
+      newErrors.full_name = "Full name is required";
+      isValid = false;
+    }
+
+    if (profile.phone && profile.phone.length !== 10) {
+      newErrors.phone = "Phone number must be exactly 10 digits";
+      isValid = false;
+    }
+
+    // Only validate address if any address field is filled (optional update)
+    // OR if we assume address is required for functionality. 
+    // Let's enforce address requirements if they are trying to save an address.
+    const isAddressPartiallyFilled = 
+      address.street_address || address.city_id || address.zip_code;
+
+    if (isAddressPartiallyFilled) {
+      if (!address.street_address?.trim()) {
+        newErrors.street_address = "Street address is required";
+        isValid = false;
+      }
+      if (!address.city_id) {
+        newErrors.city = "City is required";
+        isValid = false;
+      }
+      // state is derived
+      if (!address.zip_code?.trim()) {
+        newErrors.zip_code = "ZIP code is required";
+        isValid = false;
+      } else if (address.zip_code.length < 5) {
+        newErrors.zip_code = "ZIP code must be at least 5 characters";
+        isValid = false;
+      }
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleSave = async () => {
     if (!user) return;
+    
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please check the form for errors.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -82,15 +156,13 @@ const Settings = () => {
 
       if (profileError) throw profileError;
 
-      // Update or create default address
-      if (address.street_address && address.city && address.state && address.zip_code) {
+      if (address.street_address && address.city_id && address.zip_code) {
         if (addressId) {
           const { error: addressError } = await supabase
             .from("addresses")
             .update({
               street_address: address.street_address,
-              city: address.city,
-              state: address.state,
+              city_id: address.city_id,
               zip_code: address.zip_code,
             })
             .eq("id", addressId);
@@ -102,8 +174,7 @@ const Settings = () => {
             .insert({
               user_id: user.id,
               street_address: address.street_address,
-              city: address.city,
-              state: address.state,
+              city_id: address.city_id,
               zip_code: address.zip_code,
               is_default: true,
             });
@@ -165,19 +236,30 @@ const Settings = () => {
                 <Input
                   id="name"
                   value={profile.full_name}
-                  onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                  className="h-11"
+                  onChange={(e) => {
+                    setProfile({ ...profile, full_name: e.target.value });
+                    if (errors.full_name) setErrors({ ...errors, full_name: "" });
+                  }}
+                  className={`h-11 ${errors.full_name ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
+                {errors.full_name && <p className="text-sm text-destructive">{errors.full_name}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
                   id="phone"
+                  type="tel"
+                  maxLength={10}
                   value={profile.phone}
-                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                  className="h-11"
-                  placeholder="(555) 123-4567"
+                  onChange={(e) => {
+                    const numericValue = e.target.value.replace(/\D/g, "");
+                    setProfile({ ...profile, phone: numericValue });
+                    if (errors.phone) setErrors({ ...errors, phone: "" });
+                  }}
+                  className={`h-11 ${errors.phone ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                  placeholder="1234567890"
                 />
+                {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
               </div>
             </div>
 
@@ -213,42 +295,68 @@ const Settings = () => {
               <Input
                 id="address"
                 value={address.street_address}
-                onChange={(e) => setAddress({ ...address, street_address: e.target.value })}
-                className="h-11"
+                onChange={(e) => {
+                  setAddress({ ...address, street_address: e.target.value });
+                  if (errors.street_address) setErrors({ ...errors, street_address: "" });
+                }}
+                className={`h-11 ${errors.street_address ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 placeholder="123 Main St, Apt 4B"
               />
+              {errors.street_address && <p className="text-sm text-destructive">{errors.street_address}</p>}
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  value={address.city}
-                  onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                  className="h-11"
-                  placeholder="London"
-                />
+                <Select
+                  value={address.city_id}
+                  onValueChange={(value) => {
+                    const selectedCity = availableCities.find((c) => c.id === value);
+                    setAddress({ 
+                      ...address, 
+                      city_id: value,
+                      state: selectedCity ? selectedCity.state : "" 
+                    });
+                    if (errors.city) setErrors({ ...errors, city: "" });
+                  }}
+                >
+                  <SelectTrigger className={`h-11 ${errors.city ? "border-destructive focus:ring-destructive" : ""}`}>
+                    <SelectValue placeholder="Select City" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableCities.map((city) => (
+                      <SelectItem key={city.id} value={city.id}>
+                        {city.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.city && <p className="text-sm text-destructive">{errors.city}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="state">State</Label>
                 <Input
                   id="state"
                   value={address.state}
-                  onChange={(e) => setAddress({ ...address, state: e.target.value })}
-                  className="h-11"
+                  disabled
+                  className="h-11 bg-muted"
                   placeholder="ON"
                 />
+                {errors.state && <p className="text-sm text-destructive">{errors.state}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="zip">ZIP Code</Label>
                 <Input
                   id="zip"
                   value={address.zip_code}
-                  onChange={(e) => setAddress({ ...address, zip_code: e.target.value })}
-                  className="h-11"
+                  onChange={(e) => {
+                    setAddress({ ...address, zip_code: e.target.value });
+                    if (errors.zip_code) setErrors({ ...errors, zip_code: "" });
+                  }}
+                  className={`h-11 ${errors.zip_code ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   placeholder="78701"
                 />
+                {errors.zip_code && <p className="text-sm text-destructive">{errors.zip_code}</p>}
               </div>
             </div>
           </div>

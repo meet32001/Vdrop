@@ -17,6 +17,7 @@ interface Pickup {
 
 interface Profile {
   full_name: string | null;
+  phone: string | null;
 }
 
 const Dashboard = () => {
@@ -30,6 +31,8 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
 
+  const [profileCompletion, setProfileCompletion] = useState(0);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
@@ -37,10 +40,25 @@ const Dashboard = () => {
       // Fetch profile
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name, phone")
         .eq("user_id", user.id)
         .maybeSingle();
       setProfile(profileData);
+
+      // Fetch default address for completion score
+      const { data: addressData } = await supabase
+        .from("addresses")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_default", true)
+        .maybeSingle();
+
+      // Calculate completion
+      let score = 0;
+      if (profileData?.full_name) score += 25;
+      if (profileData?.phone) score += 25;
+      if (addressData) score += 50;
+      setProfileCompletion(score);
 
       // Fetch pickups
       const { data: pickupsData } = await supabase
@@ -105,6 +123,31 @@ const Dashboard = () => {
             </Link>
           </div>
         </div>
+
+        {/* Profile Completion - Show only if not 100% */}
+        {profileCompletion < 100 && (
+          <div className="bg-card rounded-xl border border-border p-6 shadow-sm mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-semibold text-foreground">Complete your profile</h3>
+                <p className="text-sm text-muted-foreground">Add your details for faster bookings.</p>
+              </div>
+              <span className="font-bold text-accent">{Math.round(profileCompletion)}%</span>
+            </div>
+            <div className="h-2 w-full bg-secondary rounded-full overflow-hidden mb-4">
+               <div 
+                 className="h-full bg-accent transition-all duration-500"
+                 style={{ width: `${profileCompletion}%` }}
+               />
+            </div>
+            <Link to="/dashboard/settings">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                Finish Setup
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid sm:grid-cols-3 gap-4 mb-8">

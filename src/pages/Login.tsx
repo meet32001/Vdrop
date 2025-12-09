@@ -16,6 +16,11 @@ const Login = () => {
     email: "",
     password: "",
   });
+  const [errors, setErrors] = useState<{
+    email?: string;
+    password?: string;
+    root?: string;
+  }>({});
 
   useEffect(() => {
     if (!loading && user) {
@@ -25,19 +30,22 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
     setIsLoading(true);
     
+    if (!formData.email || !formData.password) {
+      setIsLoading(false);
+      return; 
+    }
+
     const { error } = await signIn(formData.email, formData.password);
     
     if (error) {
       setIsLoading(false);
-      toast({
-        title: "Login failed",
-        description: error.message === "Invalid login credentials" 
+      const message = error.message === "Invalid login credentials" 
           ? "Invalid email or password. Please try again."
-          : error.message,
-        variant: "destructive",
-      });
+          : error.message;
+      setErrors({ root: message });
       return;
     }
 
@@ -90,9 +98,11 @@ const Login = () => {
                   type="email"
                   placeholder="you@example.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="pl-11 h-12"
-                  required
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    if (errors.root) setErrors({ ...errors, root: undefined });
+                  }}
+                  className={`pl-11 h-12 ${errors.root ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
               </div>
             </div>
@@ -111,9 +121,11 @@ const Login = () => {
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="pl-11 pr-11 h-12"
-                  required
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    if (errors.root) setErrors({ ...errors, root: undefined });
+                  }}
+                  className={`pl-11 pr-11 h-12 ${errors.root ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
                 <button
                   type="button"
@@ -124,6 +136,12 @@ const Login = () => {
                 </button>
               </div>
             </div>
+            
+            {errors.root && (
+              <div className="text-sm text-destructive font-medium text-center">
+                {errors.root}
+              </div>
+            )}
 
             <Button type="submit" variant="navy" size="lg" className="w-full" disabled={isLoading}>
               {isLoading ? (
