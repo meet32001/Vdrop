@@ -62,6 +62,10 @@ const ServiceArea = () => {
                       if (error) setError("");
                     }}
                     placeholder="Enter your email"
+                    style={{
+                      WebkitTextFillColor: 'hsl(var(--primary-foreground))',
+                      transition: 'background-color 5000s ease-in-out 0s'
+                    }}
                     className={`flex-1 px-5 py-3.5 rounded-xl bg-primary-foreground/10 border text-primary-foreground placeholder:text-primary-foreground/40 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all ${
                       error ? "border-destructive focus:ring-destructive" : "border-primary-foreground/20"
                     }`}

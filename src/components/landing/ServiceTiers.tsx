@@ -24,7 +24,7 @@ const ServiceTiers = () => {
         {/* Service Cards */}
         <div id="pricing" className="grid md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto">
           {/* Standard Tier */}
-          <div className="group relative rounded-2xl bg-card border-2 border-border p-8 lg:p-10 shadow-card hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          <div className="group relative rounded-2xl bg-card border-2 border-border p-8 lg:p-10 shadow-card hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col h-full">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
                 <Package className="w-6 h-6 text-navy" />
@@ -67,7 +67,7 @@ const ServiceTiers = () => {
               </li>
             </ul>
 
-            <Link to="/signup">
+            <Link to="/signup" className="mt-auto">
               <Button variant="navy-outline" className="w-full" size="lg">
                 Get Started
               </Button>
@@ -75,9 +75,9 @@ const ServiceTiers = () => {
           </div>
 
           {/* Premium Tier */}
-          <div className="group relative rounded-2xl bg-navy p-8 lg:p-10 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+          <div className="group relative rounded-2xl bg-navy p-8 lg:p-10 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full">
             {/* Popular Badge */}
-            <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent text-accent-foreground text-sm font-semibold">
+            <div className="absolute -top-4 right-6 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent text-accent-foreground text-sm font-semibold animate-float shadow-glow">
               <Star className="w-3.5 h-3.5" />
               Most Popular
             </div>
@@ -85,7 +85,7 @@ const ServiceTiers = () => {
             {/* Background Glow */}
             <div className="absolute -top-20 -right-20 w-60 h-60 bg-accent/20 rounded-full blur-3xl" />
 
-            <div className="relative">
+            <div className="relative flex flex-col flex-1">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center">
                   <Sparkles className="w-6 h-6 text-accent-foreground" />
@@ -137,7 +137,7 @@ const ServiceTiers = () => {
                 </li>
               </ul>
 
-              <Link to="/signup">
+              <Link to="/signup" className="mt-auto">
                 <Button variant="accent" className="w-full" size="lg">
                   Get Started
                 </Button>

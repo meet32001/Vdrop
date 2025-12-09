@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import BookPickup from "./pages/BookPickup";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
+import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/dashboard/book" element={<BookPickup />} />
             <Route path="/dashboard/history" element={<History />} />
             <Route path="/dashboard/settings" element={<Settings />} />
+            <Route path="/faq" element={<FAQ />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
