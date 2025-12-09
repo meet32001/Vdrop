@@ -10,7 +10,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { User, MapPin, Bell, CreditCard } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { User, MapPin, Bell, CreditCard, Lock, Shield, Check, X, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +41,27 @@ const Settings = () => {
   const [availableCities, setAvailableCities] = useState<{ id: string; name: string; state: string }[]>([]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Password Update State
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    password: "",
+    confirmPassword: "",
+  });
+  const [passwordErrors, setPasswordErrors] = useState<{
+    password?: string;
+    confirmPassword?: string;
+    root?: string;
+  }>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  
+  const passwordRequirements = [
+    { text: "At least 8 characters", met: passwordForm.password.length >= 8 },
+    { text: "One uppercase letter", met: /[A-Z]/.test(passwordForm.password) },
+    { text: "One number", met: /[0-9]/.test(passwordForm.password) },
+    { text: "One special character", met: /[!@#$%^&*(),.?":{}|<>]/.test(passwordForm.password) },
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -130,6 +159,48 @@ const Settings = () => {
     return isValid;
   };
 
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: typeof passwordErrors = {};
+    let isValid = true;
+    
+    if (passwordForm.password !== passwordForm.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+      isValid = false;
+    }
+
+    if (!passwordRequirements.every((r) => r.met)) {
+        newErrors.password = "Password does not meet requirements";
+        isValid = false;
+    }
+
+    setPasswordErrors(newErrors);
+    
+    if (!isValid) return;
+
+    setUpdatingPassword(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: passwordForm.password,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password updated",
+        description: "Your password has been changed successfully.",
+      });
+      setIsPasswordDialogOpen(false);
+      setPasswordForm({ password: "", confirmPassword: "" });
+      setPasswordErrors({});
+    } catch (error: any) {
+      setPasswordErrors({ root: error.message });
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!user) return;
     
@@ -146,13 +217,15 @@ const Settings = () => {
 
     try {
       // Update profile
+      // Upsert profile (create if not exists)
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({
+        .upsert({
+          user_id: user.id,
           full_name: profile.full_name,
           phone: profile.phone,
-        })
-        .eq("user_id", user.id);
+          updated_at: new Date().toISOString(),
+        });
 
       if (profileError) throw profileError;
 
@@ -210,7 +283,7 @@ const Settings = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-10 max-w-3xl">
+      <div className="p-6 lg:p-10 max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
@@ -372,13 +445,99 @@ const Settings = () => {
             <p className="text-sm text-muted-foreground">Manage email and SMS alerts.</p>
           </button>
 
-          <button className="bg-card rounded-xl border border-border p-6 text-left hover:shadow-lg transition-shadow">
-            <div className="w-10 h-10 rounded-xl bg-navy/10 flex items-center justify-center mb-4">
-              <CreditCard className="w-5 h-5 text-navy" />
-            </div>
-            <h3 className="font-semibold text-foreground mb-1">Payment Methods</h3>
-            <p className="text-sm text-muted-foreground">Add or update payment cards.</p>
-          </button>
+            <button className="bg-card rounded-xl border border-border p-6 text-left hover:shadow-lg transition-shadow">
+              <div className="w-10 h-10 rounded-xl bg-navy/10 flex items-center justify-center mb-4">
+                <CreditCard className="w-5 h-5 text-navy" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-1">Payment Methods</h3>
+              <p className="text-sm text-muted-foreground">Add or update payment cards.</p>
+            </button>
+
+            <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+              <DialogTrigger asChild>
+                <button className="bg-card rounded-xl border border-border p-6 text-left hover:shadow-lg transition-shadow">
+                  <div className="w-10 h-10 rounded-xl bg-navy/10 flex items-center justify-center mb-4">
+                    <Lock className="w-5 h-5 text-navy" />
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-1">Update Password</h3>
+                  <p className="text-sm text-muted-foreground">Change your login password.</p>
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Update Password</DialogTitle>
+                  <DialogDescription>
+                    Enter your new password below.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handlePasswordUpdate} className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="newPassword"
+                        type={showPassword ? "text" : "password"}
+                        value={passwordForm.password}
+                        onChange={(e) => {
+                           setPasswordForm({ ...passwordForm, password: e.target.value });
+                           if (passwordErrors.password) setPasswordErrors({ ...passwordErrors, password: undefined });
+                        }}
+                        className={`pr-10 ${passwordErrors.password ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {passwordErrors.password && <p className="text-sm text-destructive">{passwordErrors.password}</p>}
+                    
+                    {/* Requirements */}
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {passwordRequirements.map((req, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          {req.met ? (
+                            <Check className="w-3 h-3 text-green-500" />
+                          ) : (
+                            <X className="w-3 h-3 text-muted-foreground" />
+                          )}
+                          <span className={`text-[10px] ${req.met ? "text-green-500" : "text-muted-foreground"}`}>
+                            {req.text}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmNewPassword">Confirm Password</Label>
+                    <Input
+                      id="confirmNewPassword"
+                      type="password"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => {
+                         setPasswordForm({ ...passwordForm, confirmPassword: e.target.value });
+                         if (passwordErrors.confirmPassword) setPasswordErrors({ ...passwordErrors, confirmPassword: undefined });
+                      }}
+                      className={passwordErrors.confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}
+                    />
+                    {passwordErrors.confirmPassword && <p className="text-sm text-destructive">{passwordErrors.confirmPassword}</p>}
+                  </div>
+
+                  {passwordErrors.root && (
+                    <p className="text-sm text-destructive text-center">{passwordErrors.root}</p>
+                  )}
+
+                  <div className="flex justify-end mt-4">
+                    <Button type="submit" variant="navy" disabled={updatingPassword}>
+                      {updatingPassword ? "Updating..." : "Update Password"}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
         </div>
 
         {/* Save Button */}
