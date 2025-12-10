@@ -56,12 +56,12 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a 
-                  href="#" 
+                <Link 
+                  to="/contact" 
                   className="text-primary-foreground/60 hover:text-accent transition-colors text-sm"
                 >
                   Contact Us
-                </a>
+                </Link>
               </li>
               <li>
                 <a 
