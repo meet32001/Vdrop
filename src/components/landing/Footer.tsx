@@ -46,7 +46,6 @@ const Footer = () => {
           <div>
             <h4 className="text-primary-foreground font-semibold mb-4">Support</h4>
             <ul className="space-y-3">
-            <ul className="space-y-3">
               <li>
                 <Link 
                   to="/faq" 
@@ -64,22 +63,21 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a 
-                  href="#" 
+                <Link 
+                  to="/terms" 
                   className="text-primary-foreground/60 hover:text-accent transition-colors text-sm"
                 >
                   Terms of Service
-                </a>
+                </Link>
               </li>
               <li>
-                <a 
-                  href="#" 
+                <Link 
+                  to="/privacy" 
                   className="text-primary-foreground/60 hover:text-accent transition-colors text-sm"
                 >
                   Privacy Policy
-                </a>
+                </Link>
               </li>
-            </ul>
             </ul>
           </div>
 
@@ -122,15 +120,15 @@ const Footer = () => {
               © {new Date().getFullYear()} Vdrop. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
-              <a href="#" className="text-primary-foreground/50 hover:text-accent transition-colors text-sm">
+              <Link to="/terms" className="text-primary-foreground/50 hover:text-accent transition-colors text-sm">
                 Terms
-              </a>
-              <a href="#" className="text-primary-foreground/50 hover:text-accent transition-colors text-sm">
+              </Link>
+              <Link to="/privacy" className="text-primary-foreground/50 hover:text-accent transition-colors text-sm">
                 Privacy
-              </a>
-              <a href="#" className="text-primary-foreground/50 hover:text-accent transition-colors text-sm">
+              </Link>
+              <span className="text-primary-foreground/50 text-sm cursor-not-allowed">
                 Cookies
-              </a>
+              </span>
             </div>
           </div>
         </div>
