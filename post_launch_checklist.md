@@ -45,8 +45,15 @@ Some email addresses are hardcoded in the codebase.
 ---
 
 ## 4. DNS & Hosting
-- [ ] **Verify Domain in Supabase**:
-    *   If using Supabase to host, add the custom domain in Project Settings -> General.
+- [ ] **Connect Domain to Vercel (Frontend)**:
+    *   Go to your Vercel Dashboard -> Project Settings -> Domains.
+    *   Add `vdrop.ca`.
+    *   Vercel will give you DNS (A Record / CNAME) to add to Porkbun.
+    *   **Note**: This is FREE and hosts your main website.
+
+- [ ] **Supabase (Backend)**:
+    *   You do **NOT** need the "Custom Domain" add-on for Supabase ($25/mo) right now.
+    *   The app will simply talk to `your-project.supabase.co` in the background. This is standard for apps.
 
 - [ ] **SPF/DKIM/DMARC Records**:
     *   **Crucial**: To prevent your emails from going to Spam, you must add these TXT records to your DNS provider (GoDaddy/Namecheap). Your email provider (Google/Resend) will give you the exact values to copy-paste.
