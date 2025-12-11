@@ -55,24 +55,53 @@ const AdminPickups = () => {
 
   const fetchPickups = async () => {
     setLoading(true);
-    // Join with profiles to get user metadata
-    const { data, error } = await supabase
+    
+    // 1. Fetch Pickups
+    const { data: pickupsData, error: pickupsError } = await supabase
       .from("pickups")
-      .select(`
-        *,
-        profiles:user_id (
-          full_name,
-          phone
-        )
-      `)
+      .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) {
+    if (pickupsError) {
       toast.error("Failed to fetch pickups");
-      console.error(error);
-    } else {
-      setPickups(data as any);
+      console.error(pickupsError);
+      setLoading(false);
+      return;
     }
+
+    if (!pickupsData || pickupsData.length === 0) {
+      setPickups([]);
+      setLoading(false);
+      return;
+    }
+
+    // 2. Fetch Profiles for these users
+    const userIds = Array.from(new Set(pickupsData.map(p => p.user_id)));
+    
+    const { data: profilesData, error: profilesError } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, phone")
+      .in("user_id", userIds);
+
+    if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
+      // Continue anyway, just without names
+    }
+
+    // 3. Merge Data
+    const mergedData = pickupsData.map(pickup => {
+      const profile = profilesData?.find(p => p.user_id === pickup.user_id);
+      return {
+        ...pickup,
+        profiles: {
+          full_name: profile?.full_name || null,
+          phone: profile?.phone || null,
+          email: null
+        }
+      };
+    });
+
+    setPickups(mergedData as AdminPickup[]);
     setLoading(false);
   };
 
@@ -87,7 +116,7 @@ const AdminPickups = () => {
 
     const { error } = await supabase
       .from("pickups")
-      .update({ status: newStatus })
+      .update({ status: newStatus as any })
       .eq("id", id);
 
     if (error) {
