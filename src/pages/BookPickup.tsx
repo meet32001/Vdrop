@@ -137,6 +137,28 @@ const BookPickup = () => {
         title: "Pickup booked!",
         description: "You'll receive a confirmation email shortly.",
       });
+
+      // Send confirmation email (Fire and forget)
+      supabase.functions.invoke("smart-processor", {
+        body: {
+          to: user.email,
+          subject: "Pickup Confirmed! 📦",
+          html: `
+            <h1>Your Vdrop Pickup is Confirmed!</h1>
+            <p>Hi there,</p>
+            <p>We've received your booking. Here are the details:</p>
+            <ul>
+              <li><strong>Date:</strong> ${formData.pickupDate}</li>
+              <li><strong>Time:</strong> ${formData.pickupTime}</li>
+              <li><strong>Address:</strong> ${formData.address}, ${formData.city}</li>
+              <li><strong>Service:</strong> ${serviceType === "premium" ? "Premium ($15)" : "Standard ($7)"}</li>
+            </ul>
+            <p>Our driver will be there within the selected window.</p>
+            <p>Thanks,<br>The Vdrop Team</p>
+          `,
+        },
+      });
+
       navigate("/dashboard");
     } catch (error: any) {
       toast({

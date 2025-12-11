@@ -36,6 +36,26 @@ const Contact = () => {
       if (error) throw error;
 
       toast.success("Message sent! We'll get back to you shortly.");
+
+      // Notify Admin (Fire and forget)
+      // Note: In production, replace 'your-admin-email' with the actual admin email or use an environment variable if possible.
+      // Since we are using the user's Gmail as SMTP, we can send it TO the SMTP user as well.
+      supabase.functions.invoke("smart-processor", {
+        body: {
+          to: "20bmiit066@gmail.com", // Send to self (Admin)
+          subject: `New Contact Request: ${formData.subject}`,
+          html: `
+            <h1>New Contact Message</h1>
+            <p><strong>From:</strong> ${formData.name} (${formData.email})</p>
+            <p><strong>Subject:</strong> ${formData.subject}</p>
+            <p><strong>Message:</strong></p>
+            <blockquote style="background: #f9f9f9; padding: 10px; border-left: 4px solid #ccc;">
+              ${formData.message.replace(/\n/g, "<br>")}
+            </blockquote>
+          `,
+        },
+      });
+
       setIsSuccess(true);
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error) {

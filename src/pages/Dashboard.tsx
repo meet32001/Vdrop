@@ -26,7 +26,7 @@ const Dashboard = () => {
   const [recentPickups, setRecentPickups] = useState<Pickup[]>([]);
   const [stats, setStats] = useState({
     total: 0,
-    thisMonth: 0,
+    pending: 0,
     completed: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -70,12 +70,9 @@ const Dashboard = () => {
       if (pickupsData) {
         setRecentPickups(pickupsData.slice(0, 3));
         
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        
         setStats({
           total: pickupsData.length,
-          thisMonth: pickupsData.filter(p => new Date(p.created_at) >= startOfMonth).length,
+          pending: pickupsData.filter(p => p.status === "pending").length,
           completed: pickupsData.filter(p => p.status === "completed").length,
         });
       }
@@ -90,7 +87,7 @@ const Dashboard = () => {
 
   const statCards = [
     { label: "Total Pickups", value: stats.total.toString(), icon: Package, color: "bg-navy/10 text-navy" },
-    { label: "This Month", value: stats.thisMonth.toString(), icon: Clock, color: "bg-accent/10 text-accent" },
+    { label: "Pending Pickups", value: stats.pending.toString(), icon: Clock, color: "bg-accent/10 text-accent" },
     { label: "Completed", value: stats.completed.toString(), icon: CheckCircle, color: "bg-green-100 text-green-600" },
   ];
 

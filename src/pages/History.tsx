@@ -18,6 +18,7 @@ interface Pickup {
   pickup_zip: string;
   number_of_boxes: number | null;
   item_size: string | null;
+  label_file_url: string | null;
   dropoff_photo_url: string | null;
 }
 
@@ -61,7 +62,7 @@ const History = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Pickup History</h1>
-          <p className="text-muted-foreground">View all your past pickups and receipts.</p>
+          <p className="text-muted-foreground">View all your past pickups.</p>
         </div>
 
         {/* Pickups List */}
@@ -126,15 +127,17 @@ const History = () => {
                     {/* Actions */}
                     <div className="flex items-center gap-2">
                       {pickup.dropoff_photo_url && (
-                        <Button variant="outline" size="sm">
-                          <Camera className="w-4 h-4" />
-                          View Photo
+                        <Button variant="outline" size="sm" onClick={() => window.open(pickup.dropoff_photo_url!, '_blank')}>
+                          <Camera className="w-4 h-4 mr-2" />
+                          Possible Proof
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm">
-                        <Download className="w-4 h-4" />
-                        Receipt
-                      </Button>
+                      {pickup.label_file_url && (
+                        <Button variant="ghost" size="sm" onClick={() => window.open(pickup.label_file_url!, '_blank')}>
+                          <Download className="w-4 h-4 mr-2" />
+                          View Label
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
