@@ -3,29 +3,35 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
-// Hardcoded for MVP security. 
-// In production, you might want to move this to an Env Var or a database 'role' column.
-const ADMIN_EMAILS = [
-  "20bmiit066@gmail.com",
-  "meet30012002@gmail.com", // Adding potential personal email just in case, based on user history
-  "hello@vdrop.ca"
-];
+// MVP Security: Using Env Var for Super Admins
+// For production, this allows changing admins without redeploying code if using env vars
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || "").split(",").map((e: string) => e.trim());
 
 const AdminRoute = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, role } = useAuth(); // Use role from metadata
 
   useEffect(() => {
-    if (!loading && user && !ADMIN_EMAILS.includes(user.email || "")) {
-      toast.error("Access Denied. Admin only.");
+    // If NOT loading, User exists
+    if (!loading && user) {
+      // Permission Check: Must be Admin OR Driver OR in the Env Allowlist
+      const isAllowed = (role === 'admin') || (role === 'driver') || ADMIN_EMAILS.includes(user.email || "");
+      
+      if (!isAllowed) {
+        toast.error("Access Denied. Admin permissions required.");
+      }
     }
-  }, [user, loading]);
+  }, [user, loading, role]);
 
   if (loading) {
     return <div className="h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  if (!user || !ADMIN_EMAILS.includes(user.email || "")) {
-    return <Navigate to="/dashboard" replace />;
+  // Permission Check Logic again for rendering
+  const isAllowed = user && ((role === 'admin') || (role === 'driver') || ADMIN_EMAILS.includes(user.email || ""));
+
+  if (!isAllowed) {
+    // Redirect to login if no user, or dashboard if unauthorized user
+    return user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
   }
 
   return <Outlet />;

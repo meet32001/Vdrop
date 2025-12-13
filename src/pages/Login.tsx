@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn, user, loading } = useAuth();
+  const { signIn, user, loading, role } = useAuth(); // Destructure role
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,10 +23,15 @@ const Login = () => {
   }>({});
 
   useEffect(() => {
+    // Redirect based on role
     if (!loading && user) {
-      navigate("/dashboard");
+      if (role === 'admin' || role === 'driver') {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, role, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +58,7 @@ const Login = () => {
       title: "Welcome back!",
       description: "You've successfully logged in.",
     });
-    navigate("/dashboard");
+    // Navigation is handled by useEffect
   };
 
   if (loading) {
