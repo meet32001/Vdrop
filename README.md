@@ -12,10 +12,13 @@
 
 *   **📅 Easy Booking**: Schedule pickups with a few clicks, choosing convenient dates and times.
 *   **🏢 Address Management**: Save and manage detailed pickup addresses.
-*   **🏷️ Label Upload**: Securely upload shipping labels (PDF/Images) directly to the cloud.
+*   **🛡️ Role-Based Access Control (RBAC)**: Secure Admin and Customer panels with performant Metadata Sync logic.
+*   **🔒 Enhanced Security**: Database triggers prevents privilege escalation hacks and unauthorized role changes.
+*   **⚙️ Smart Configuration**: Environment-based Admin Allowlist and dynamic role management.
 *   **📊 User Dashboard**: Track pickup status (Pending, Completed, Cancelled) in real-time.
 *   **📧 Notifications**: Automated email confirmations for bookings and admin alerts (powered by Supabase Edge Functions).
 *   **📱 Responsive Design**: Fully optimized for mobile, tablet, and desktop experiences.
+*   **🏷️ Label Upload**: Securely upload shipping labels (PDF/Images) directly to the cloud.
 
 ---
 
